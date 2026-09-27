@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Boilerplate API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Same neutral palette as the frontend's shadcn theme. */
+    :root {
+      --bg: #ffffff; --fg: #0a0a0a; --muted: #737373; --subtle: #f5f5f5;
+      --card: #ffffff; --border: #e5e5e5; --primary: #171717; --primary-fg: #fafafa;
+      --ok: #10b981; --warn: #f59e0b; --err: #ef4444;
+      --get: #047857; --get-bg: #ecfdf5; --post: #1d4ed8; --post-bg: #eff6ff;
+      --patch: #b45309; --patch-bg: #fffbeb; --delete: #b91c1c; --delete-bg: #fef2f2;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a; --fg: #fafafa; --muted: #a3a3a3; --subtle: #171717;
+        --card: #121212; --border: #262626; --primary: #e5e5e5; --primary-fg: #171717;
+        --get: #6ee7b7; --get-bg: #064e3b55; --post: #93c5fd; --post-bg: #1e3a8a55;
+        --patch: #fcd34d; --patch-bg: #78350f55; --delete: #fca5a5; --delete-bg: #7f1d1d55;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font: 15px/1.5 "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    code, .mono { font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .wrap { max-width: 64rem; margin: 0 auto; padding: 0 1rem; }
+    svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+
+    header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(8px); }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; height: 3.5rem; }
+    .brand { display: flex; align-items: center; gap: .5rem; font-weight: 600; letter-spacing: -.01em; text-decoration: none; }
+    .logo { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .375rem;
+      background: var(--primary); color: var(--primary-fg); font-size: .75rem; font-weight: 700; }
+    nav { display: flex; gap: .25rem; }
+
+    .btn { display: inline-flex; align-items: center; gap: .375rem; height: 2.25rem; padding: 0 .75rem;
+      border-radius: .5rem; border: 1px solid transparent; font-size: .875rem; font-weight: 500;
+      text-decoration: none; cursor: pointer; background: none; color: inherit; transition: background .15s; }
+    .btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--muted) 50%, transparent); outline-offset: 1px; }
+    .btn-primary { background: var(--primary); color: var(--primary-fg); }
+    .btn-primary:hover { opacity: .9; }
+    .btn-outline { border-color: var(--border); background: var(--card); }
+    .btn-outline:hover, .btn-ghost:hover { background: var(--subtle); }
+    .btn-sm { height: 1.75rem; padding: 0 .5rem; font-size: .8rem; }
+
+    .pill { display: inline-flex; align-items: center; gap: .375rem; height: 1.375rem; padding: 0 .625rem;
+      border-radius: 999px; background: var(--subtle); font-size: .75rem; font-weight: 500; }
+    .dot { width: .5rem; height: .5rem; border-radius: 999px; background: var(--ok); }
+    .dot.err { background: var(--err); } .dot.warn { background: var(--warn); }
+
+    .hero { padding: 4rem 0 2.5rem; text-align: center; }
+    .hero h1 { margin: 1.25rem 0 0; font-size: clamp(2.25rem, 5vw, 3rem); font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+    .hero p { max-width: 36rem; margin: 1rem auto 0; color: var(--muted); font-size: 1.075rem; text-wrap: pretty; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; margin-top: 2rem; }
+
+    .tiles { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: .875rem; }
+    .tile { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.125rem; }
+    .tile .label { display: flex; align-items: center; gap: .625rem; color: var(--muted); font-size: .875rem; }
+    .tile .value { display: flex; align-items: center; gap: .5rem; font-weight: 500; font-size: .9rem; }
+
+    section { margin-top: 1.5rem; }
+    .card-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .5rem;
+      padding: 1.125rem 1.125rem .875rem; }
+    .card-head h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .card-head p { margin: .125rem 0 0; color: var(--muted); font-size: .875rem; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th { text-align: left; font-weight: 500; color: var(--muted); font-size: .75rem; padding: .5rem 1.125rem;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--subtle); white-space: nowrap; }
+    td { padding: .75rem 1.125rem; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: color-mix(in srgb, var(--subtle) 60%, transparent); }
+    .methods { display: flex; gap: .25rem; }
+    .method { display: inline-block; min-width: 3.25rem; padding: .125rem .375rem; border-radius: .375rem; text-align: center;
+      font: 600 .7rem/1.4 "Geist Mono", ui-monospace, monospace; letter-spacing: .02em; }
+    .m-GET { color: var(--get); background: var(--get-bg); } .m-POST { color: var(--post); background: var(--post-bg); }
+    .m-PUT, .m-PATCH { color: var(--patch); background: var(--patch-bg); } .m-DELETE { color: var(--delete); background: var(--delete-bg); }
+    .path { font-family: "Geist Mono", ui-monospace, monospace; font-size: .825rem; }
+    a.path { text-decoration: none; border-bottom: 1px dashed var(--border); }
+    a.path:hover { border-bottom-color: var(--fg); }
+    .param { color: var(--muted); }
+    .muted { color: var(--muted); }
+    .access { display: inline-flex; align-items: center; gap: .375rem; font-size: .8rem; color: var(--muted); }
+    .access svg { width: .875rem; height: .875rem; }
+
+    .grid-2 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+    .card-body { padding: 0 1.125rem 1.125rem; }
+    dl.creds { display: grid; grid-template-columns: auto 1fr; gap: .25rem .875rem; margin: 0 0 1rem;
+      padding: .75rem .875rem; border: 1px dashed var(--border); border-radius: .625rem; background: var(--subtle); font-size: .825rem; }
+    dl.creds dt { color: var(--muted); }
+    dl.creds dd { margin: 0; }
+    .snippet { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .5rem;
+      padding: .5rem .5rem .5rem .75rem; border-radius: .5rem; background: var(--subtle); font-size: .8rem; }
+    .snippet code { overflow-x: auto; white-space: nowrap; }
+
+    footer { margin: 3rem 0 2.5rem; text-align: center; color: var(--muted); font-size: .825rem; }
+    footer code { font-size: .8rem; }
+    @media (max-width: 40rem) { .hide-sm { display: none; } .hero { padding-top: 2.5rem; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="/"><span class="logo">B</span>Boilerplate <span class="pill hide-sm">API v1</span></a>
+      <nav>
+        <a class="btn btn-ghost" href="/admin/">Admin</a>
+        <a class="btn btn-primary" href="{{ frontend_url }}">
+          Open app
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <span class="pill">
+        <span class="dot {% if not database_ok %}err{% endif %}"></span>
+        {% if debug %}Development server{% else %}Production server{% endif %}
+      </span>
+      <h1>Boilerplate API</h1>
+      <p>This is the Django REST Framework backend. The web app lives at
+        <a href="{{ frontend_url }}">{{ frontend_url }}</a>. Everything here is served under <code>/api/v1/</code>.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/api/v1/health/">
+          Check health
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a class="btn btn-outline" href="/admin/">Django admin</a>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="card tile">
+        <span class="label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>
+          API
+        </span>
+        <span class="value"><span class="dot"></span>Online</span>
+      </div>
+      <div class="card tile">
+        <span class="label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+          Database
+        </span>
+        <span class="value">
+          <span class="dot {% if not database_ok %}err{% endif %}"></span>
+          {% if database_ok %}Connected{% else %}Unavailable{% endif %}
+        </span>
+      </div>
+      {% for name, version in versions.items %}
+        <div class="card tile">
+          <span class="label">{{ name }}</span>
+          <span class="value mono">{{ version }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <section class="card" aria-labelledby="endpoints-title">
+      <div class="card-head">
+        <div>
+          <h2 id="endpoints-title">Endpoints</h2>
+          <p>Discovered from the URL configuration. Click a GET path to open DRF's browsable API.</p>
+        </div>
+        <span class="pill">{{ endpoints|length }} routes</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Method</th><th>Path</th><th class="hide-sm">Name</th><th>Access</th></tr>
+          </thead>
+          <tbody>
+            {% for e in endpoints %}
+              <tr>
+                <td><span class="methods">{% for m in e.methods %}<span class="method m-{{ m }}">{{ m }}</span>{% endfor %}</span></td>
+                <td>
+                  {% if e.browsable %}<a class="path" href="{{ e.path }}">{{ e.path }}</a>{% else %}<span class="path">{{ e.path }}</span>{% endif %}
+                </td>
+                <td class="hide-sm muted mono">{{ e.name }}</td>
+                <td>
+                  {% if e.public %}
+                    <span class="access">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                      Public
+                    </span>
+                  {% else %}
+                    <span class="access">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Login required
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-head"><div><h2>Django admin</h2><p>Manage users and data at <code>/admin/</code>.</p></div></div>
+        <div class="card-body">
+          {% if admin_credentials %}
+            <dl class="creds mono" aria-label="Default development login">
+              <dt>username</dt><dd>{{ admin_credentials.username }}</dd>
+              <dt>password</dt><dd>{{ admin_credentials.password }}</dd>
+            </dl>
+          {% endif %}
+          <a class="btn btn-outline" href="/admin/">Open admin</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>Try it</h2><p>From a terminal on this machine.</p></div></div>
+        <div class="card-body">
+          {% with base=request.scheme|add:"://"|add:request.get_host %}
+            <div class="snippet"><code>curl {{ base }}/api/v1/health/</code><button class="btn btn-ghost btn-sm" type="button" data-copy="curl {{ base }}/api/v1/health/">Copy</button></div>
+            <div class="snippet"><code>curl -c jar -b jar {{ base }}/api/v1/auth/csrf/</code><button class="btn btn-ghost btn-sm" type="button" data-copy="curl -c jar -b jar {{ base }}/api/v1/auth/csrf/">Copy</button></div>
+          {% endwith %}
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Login and logout need the <code>X-CSRFToken</code> header from the <code>csrftoken</code> cookie.
+    </footer>
+  </main>
+
+  <script>
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy);
+          button.textContent = "Copied";
+        } catch {
+          button.textContent = "Press Ctrl+C";
+        }
+        setTimeout(() => (button.textContent = "Copy"), 1500);
+      });
+    });
+  </script>
+</body>
+</html>

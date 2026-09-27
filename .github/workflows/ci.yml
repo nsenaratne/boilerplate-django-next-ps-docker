@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start dev stack
+        run: docker compose up -d --build --wait
+
+      - name: Backend lint + tests
+        run: |
+          docker compose exec -T backend ruff check .
+          docker compose exec -T -e DJANGO_SETTINGS_MODULE=config.settings.test backend pytest
+
+      - name: Frontend typecheck
+        run: docker compose exec -T frontend npm run typecheck
+
+      - name: E2E (Playwright)
+        run: docker compose --profile test run --rm e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs
+
+  prod-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production images
+        run: docker compose -f docker-compose.prod.yml build

@@ -1,0 +1,33 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+staticfiles/
+backend/.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# node
+node_modules/
+.next/
+out/
+frontend/.env
+frontend/.env.local
+*.tsbuildinfo
+
+# playwright
+e2e/test-results/
+e2e/playwright-report/
+
+# misc
+.DS_Store
+*.log
+.env
+
+# claude code (personal files)
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+
+

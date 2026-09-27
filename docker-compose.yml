@@ -1,0 +1,107 @@
+# Development stack — just run:  docker compose up
+# (or: make up)
+#
+#   Frontend  http://localhost:3000   (Next.js dev server, hot reload)
+#   Backend   http://localhost:8000   (Django runserver, auto-reload; API overview page at /)
+#   Admin     http://localhost:8000/admin   (admin / admin by default)
+#   Postgres  localhost:5432
+#
+# All settings have defaults, so no .env file is required.
+# Copy .env.example to .env to override anything.
+
+name: ${COMPOSE_PROJECT_NAME:-app}
+
+x-backend-env: &backend-env
+  DJANGO_SETTINGS_MODULE: config.settings.dev
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-secret-key}
+  DJANGO_DEBUG: "true"
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+  DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app}
+  CORS_ALLOWED_ORIGINS: http://localhost:3000
+  CSRF_TRUSTED_ORIGINS: http://localhost:3000
+  FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
+  DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-admin}
+  DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-admin@example.com}
+  DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-admin}
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18 images store data under /var/lib/postgresql/<major>/,
+      # so the volume is mounted one level up.
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    restart: unless-stopped
+    environment: *backend-env
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/')"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      # Shown on the login page in development only (never set in docker-compose.prod.yml).
+      NEXT_PUBLIC_DEV_LOGIN_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-admin}
+      NEXT_PUBLIC_DEV_LOGIN_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-admin}
+      WATCHPACK_POLLING: "true" # reliable file watching on Docker Desktop (macOS/Windows)
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Playwright end-to-end tests. Not started by `docker compose up`;
+  # run with:  docker compose run --rm e2e   (or: make e2e)
+  e2e:
+    build:
+      context: ./e2e
+    profiles: ["test"]
+    environment:
+      BASE_URL: http://frontend:3000
+      CI: "true"
+    volumes:
+      - ./e2e/playwright-report:/e2e/playwright-report
+      - ./e2e/test-results:/e2e/test-results
+    depends_on:
+      - frontend
+
+volumes:
+  db_data:
+  frontend_node_modules:
+  frontend_next:
