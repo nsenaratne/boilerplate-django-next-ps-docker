@@ -3,7 +3,7 @@ import { z } from "zod";
 // Next.js inlines NEXT_PUBLIC_* at build time only when they're referenced literally,
 // so each variable is listed by name here instead of reading process.env dynamically.
 const schema = z.object({
-  apiUrl: z.string().min(1).default("http://localhost:8000/api/v1"),
+  apiUrl: z.string().min(1).default("/api/v1"),
   devLoginUsername: z.string().min(1).optional(),
   devLoginPassword: z.string().min(1).optional(),
   isProduction: z.boolean(),

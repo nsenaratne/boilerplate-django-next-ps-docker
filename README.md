@@ -35,6 +35,9 @@ That's it — no `.env` file, no local Python or Node. On first start it will:
 | Django admin  | http://localhost:8000/admin/         |
 | Postgres      | `localhost:5432` (postgres/postgres) |
 
+The app calls the API on its own origin (`http://localhost:3000/api/v1/...`); the Next.js dev
+server proxies those requests to Django, just as nginx does in production.
+
 Code in `backend/` and `frontend/` is mounted into the containers, so edits
 hot-reload instantly.
 

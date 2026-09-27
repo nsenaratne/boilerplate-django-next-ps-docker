@@ -15,11 +15,15 @@ x-backend-env: &backend-env
   DJANGO_SETTINGS_MODULE: config.settings.dev
   DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-secret-key}
   DJANGO_DEBUG: "true"
-  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+  # "frontend": requests proxied by the Next.js dev server, e.g. from the e2e container.
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,frontend
   DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app}
-  CORS_ALLOWED_ORIGINS: http://localhost:3000
-  CSRF_TRUSTED_ORIGINS: http://localhost:3000
+  CORS_ALLOWED_ORIGINS: http://localhost:${FRONTEND_PORT:-3000}
+  CSRF_TRUSTED_ORIGINS: http://localhost:${FRONTEND_PORT:-3000},http://frontend:3000
   FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
+  # In dev all browser traffic reaches Django through the Next.js proxy, so every client
+  # shares one rate-limit bucket. Keep it loose here; production uses the default 10/min.
+  LOGIN_THROTTLE_RATE: ${LOGIN_THROTTLE_RATE:-100/min}
   DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-admin}
   DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-admin@example.com}
   DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-admin}
@@ -71,7 +75,9 @@ services:
       target: dev
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      # Same-origin API: the browser calls /api/v1 and next.config.ts proxies it to Django.
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
+      API_PROXY_TARGET: http://backend:8000
       # Shown on the login page in development only (never set in docker-compose.prod.yml).
       NEXT_PUBLIC_DEV_LOGIN_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-admin}
       NEXT_PUBLIC_DEV_LOGIN_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-admin}

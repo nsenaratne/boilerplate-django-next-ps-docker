@@ -106,6 +106,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "apps.core.exceptions.exception_handler",
+    # Number of trusted proxies in front of Django. Throttling identifies clients by the
+    # X-Forwarded-For entry this many hops back, so clients can't spoof it. None = no proxy.
+    "NUM_PROXIES": env.int("DRF_NUM_PROXIES", default=None),
     "DEFAULT_THROTTLE_RATES": {
         "login": env("LOGIN_THROTTLE_RATE", default="10/min"),
     },
@@ -117,8 +120,8 @@ CORS_ALLOWED_ORIGINS = env.list(
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS", default=["http://localhost:3000"]
 )
-# The frontend sends the session cookie cross-origin (fetch credentials: "include"),
-# so the browser only accepts API responses when this is on.
+# The bundled frontend is same-origin (Next.js proxy in dev, nginx in prod). CORS only matters
+# for clients on another origin; they send the session cookie, so credentials must be allowed.
 CORS_ALLOW_CREDENTIALS = True
 
 # Linked from the API landing page at "/".
